@@ -18,6 +18,11 @@ else
 fi
 rm "$cron_temp_file"
 
+if [[ "$1" == "--auto" ]]; then
+  timedatectl set-timezone "$2"
+  sudo reboot
+fi
+
 echo "You need to set the timezone. Press ENTER, then select your region."
 read a
 sudo dpkg-reconfigure tzdata
