@@ -1,5 +1,5 @@
 echo "Installing git..."
-sudo apt install git
+sudo apt install git -y
 
 echo "Cloning repo to home dir..."
 cd ~
@@ -19,7 +19,7 @@ fi
 rm "$cron_temp_file"
 
 if [[ "$1" == "--auto" ]]; then
-  timedatectl set-timezone "$2"
+  sudo timedatectl set-timezone "$2"
   sudo reboot
 fi
 
