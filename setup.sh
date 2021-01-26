@@ -1,5 +1,5 @@
 echo "Installing git..."
-sudo apt install git -y
+sudo apt install git python-flask -y
 
 echo "Cloning repo to home dir..."
 cd ~
