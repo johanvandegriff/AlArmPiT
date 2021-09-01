@@ -2,11 +2,23 @@
 
 <head>
     <title>AlArmPiT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body>
+    <button onclick="myRequest('/lights_on')">on</button>
+    <button onclick="myRequest('/lights_off')">off</button>
+    <button onclick="myRequest('/lights_toggle')">toggle</button>
+    <button onclick="myRequest('/ring')">ring</button>
+    <br/>
+    <input type="text" id="hour" name="hour">:<input type="text" id="minute" name="minute">
+    <button onclick="setTime()">set time</button>
+
+    <br/>
+    <pre id="output"></pre>
 
     <script>
+        var output = document.getElementById("output");
 
         function myRequest(url) {
             let xhr = new XMLHttpRequest();
@@ -15,12 +27,13 @@
 
             xhr.onload = function () {
                 console.log(xhr.response);
+                output.innerText += xhr.response + '\n';
             };
         }
 
         function setTime() {
-            var hour = document.getElementById("hour").value
-            var minute = document.getElementById("minute").value
+            var hour = document.getElementById("hour").value;
+            var minute = document.getElementById("minute").value;
 
             let xhr = new XMLHttpRequest();
             xhr.open('get', '/set_time?hour='+hour+'&minute='+minute);
@@ -28,17 +41,10 @@
 
             xhr.onload = function () {
                 console.log(xhr.response);
+                output.innerText += xhr.response + '\n';
             };
         }
     </script>
-
-
-    <button onclick="myRequest('/lights_on')">on</button>
-    <button onclick="myRequest('/lights_off')">off</button>
-    <button onclick="myRequest('/ring')">ring</button>
-    <br/>
-    <input type="text" id="hour" name="hour">:<input type="text" id="minute" name="minute">
-    <button onclick="setTime()">set time</button>
 
 </body>
 

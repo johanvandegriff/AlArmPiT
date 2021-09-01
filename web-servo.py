@@ -9,6 +9,7 @@ app = Flask(__name__)
 ALARM_SOUND_FILE_WAV = '/home/pi/AlArmPiT/airhorn.wav'
 
 #https://pinout.xyz/
+BUTTON_BOARD_PIN = 38 #GPIO 20
 SERVO_BOARD_PIN = 11 #GPIO 17
 LIGHTS_OFF_ANGLE = 125
 LIGHTS_ON_ANGLE = 170
@@ -71,13 +72,15 @@ def set_time():
     return 'alarm time set to {:02d}:{:02d}'.format(alarmHour, alarmMinute)
 
 busy = False
+lightsOn = True
 
 @app.route('/lights_on')
 def lights_on():
-    global busy
+    global busy, lightsOn
     if not busy:
         busy = True
         setAngle(servo, LIGHTS_ON_ANGLE)
+        lightsOn = True
         busy = False
         return 'lights on!'
     else:
@@ -85,14 +88,37 @@ def lights_on():
 
 @app.route('/lights_off')
 def lights_off():
-    global busy
+    global busy, lightsOn
     if not busy:
         busy = True
         setAngle(servo, LIGHTS_OFF_ANGLE)
+        lightsOn = False
         busy = False
         return 'lights off!'
     else:
         return 'busy, cannot turn off'
+
+@app.route('/lights_toggle')
+def lights_toggle():
+    global busy, lightsOn
+    if not busy:
+        if lightsOn:
+            if not "busy" in lights_off():
+                lightsOn = False
+                return 'lights off! (toggled)'
+        else:
+            if not "busy" in lights_on():
+                lightsOn = True
+                return 'lights on! (toggled)'
+    return 'busy, cannot toggle'
+
+def button_callback(_):
+    lights_toggle()
+
+GPIO.setup(BUTTON_BOARD_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.add_event_detect(BUTTON_BOARD_PIN, GPIO.RISING, bouncetime=1000)
+GPIO.add_event_callback(BUTTON_BOARD_PIN, button_callback)
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0')
