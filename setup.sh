@@ -3,7 +3,7 @@ sudo apt install git python-flask -y
 
 echo "Cloning repo to home dir..."
 cd ~
-git clone https://gitlab.com/johanvandegriff/AlArmPiT.git
+git clone https://codeberg.org/johanvandegriff/AlArmPiT.git
 
 echo "Adding connection script to local crontab..."
 CRON_JOB="@reboot /usr/bin/python2 /home/pi/AlArmPiT/web-servo.py
