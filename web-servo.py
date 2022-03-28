@@ -9,12 +9,14 @@ app = Flask(__name__)
 ALARM_SOUND_FILE_WAV = '/home/pi/AlArmPiT/airhorn.wav'
 
 #https://pinout.xyz/
+RELAY_BOARD_PIN = 13 # GPIO 27
 BUTTON_BOARD_PIN = 38 #GPIO 20
 SERVO_BOARD_PIN = 11 #GPIO 17
 LIGHTS_OFF_ANGLE = 125
 LIGHTS_ON_ANGLE = 170
 
 GPIO.setmode(GPIO.BOARD)
+GPIO.setup(RELAY_BOARD_PIN, GPIO.OUT)
 
 def setupPwmPin(pin, rate):
     GPIO.setup(pin, GPIO.OUT)
@@ -73,6 +75,31 @@ def set_time():
 
 busy = False
 lightsOn = True
+relayOn = False
+
+def relay(value):
+    global relayOn
+    relayOn = value
+    GPIO.output(RELAY_BOARD_PIN, value)
+
+
+@app.route('/relay_on')
+def relay_on():
+    relay(True)
+    return 'relay on!'
+
+@app.route('/relay_off')
+def relay_off():
+    relay(False)
+    return 'relay off!'
+
+@app.route('/relay_toggle')
+def relay_toggle():
+    relay(not relayOn)
+    if relayOn:
+        return 'relay on! (toggled)'
+    else:
+        return 'relay off! (toggled)'
 
 @app.route('/lights_on')
 def lights_on():
