@@ -37,7 +37,5 @@ I want to make it accessible outside the home network in a secure way.
 3dprinting apache digitalocean flask javascript python raspberry-pi servo ssh
 
 ## Try it out
-https://gitlab.com/johanvandegriff/AlArmPiT
-http://alarmpit.tech/
-https://wake-up-and.study/
-http://wake-up-and.study:28400/
+https://codeberg.org/johanvandegriff/AlArmPiT
+https://alarmpit.johanv.xyz/
