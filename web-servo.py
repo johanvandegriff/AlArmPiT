@@ -3,10 +3,72 @@ import RPi.GPIO as GPIO
 import time
 import datetime
 import os
+import json
 
 app = Flask(__name__)
 
 ALARM_SOUND_FILE_WAV = '/home/pi/AlArmPiT/airhorn.wav'
+SETTINGS_FILE = '/home/pi/AlArmPiT/settings.json'
+
+
+class SettingsFile:
+    def __init__(self, file):
+        self.file = file
+        if os.path.exists(self.file):
+            self._read_file()
+        else:
+            self.data = {}
+        defaults = {
+            "alarmHour": 0,
+            "alarmMinute": 0,
+            "lightsOn": True,
+            "relayOn": False
+        }
+        changed = False
+        for k in defaults:
+            if k not in self.data:
+                self.data[k] = defaults[k]
+                changed = True
+        if changed:
+            self._write_file()
+
+    def getAlarmHour(self):
+        return self.data["alarmHour"]
+
+    def getAlarmMinute(self):
+        return self.data["alarmMinute"]
+
+    def getLightsOn(self):
+        return self.data["lightsOn"]
+
+    def getRelayOn(self):
+        return self.data["relayOn"]
+
+    def setAlarmHour(self, alarmHour):
+        self.data["alarmHour"] = alarmHour
+        self._write_file()
+
+    def setAlarmMinute(self, alarmMinute):
+        self.data["alarmMinute"] = alarmMinute
+        self._write_file()
+
+    def setLightsOn(self, lightsOn):
+        self.data["lightsOn"] = lightsOn
+        self._write_file()
+
+    def setRelayOn(self, relayOn):
+        self.data["relayOn"] = relayOn
+        self._write_file()
+
+    def _write_file(self):
+        with open(self.file, 'w') as f:
+            json.dump(self.data, f)
+
+    def _read_file(self):
+        with open(self.file, 'r') as f:
+            self.data = json.load(f)
+
+settingsFile = SettingsFile(SETTINGS_FILE)
 
 #https://pinout.xyz/
 RELAY_BOARD_PIN = 13 # GPIO 27
@@ -45,22 +107,21 @@ def ring():
     os.system('aplay ' + ALARM_SOUND_FILE_WAV)
     return 'alarm go ringgggg'
 
-alarmHour = 0
-alarmMinute = 0
-
 #add to crontab -e"
 #* * * * * curl localhost:5000/cron
 @app.route('/cron')
 def cron():
+    alarmHour, alarmMinute = settingsFile.getAlarmHour(), settingsFile.getAlarmMinute()
     # print(time.strftime("%A, %d. %B %Y %I:%M:%S %p"))
     if alarmHour == int(datetime.datetime.today().strftime("%H")) and alarmMinute == int(datetime.datetime.today().strftime("%M")):
-        return 'alarm right now ' + lights_on() + ' ' + ring()
-    print('no alarm')
-    return 'no alarm right now, next alarm is at {:02d}:{:02d}'.format(alarmHour, alarmMinute)
+        res = 'alarm right now ' + lights_on() + ' ' + ring()
+    else:
+        res = 'no alarm right now, next alarm is at ' + get_time()
+    print(res)
+    return res
 
 @app.route('/set_time')
 def set_time():
-    global alarmHour, alarmMinute
     hourStr = request.args.get('hour')
     minuteStr = request.args.get('minute')
     if hourStr is None:
@@ -68,18 +129,19 @@ def set_time():
     if minuteStr is None:
         return 'alarm not set, invalid minute'
     
-    alarmHour = int(hourStr)
-    alarmMinute = int(minuteStr)
+    settingsFile.setAlarmHour(int(hourStr))
+    settingsFile.setAlarmMinute(int(minuteStr))
 
-    return 'alarm time set to {:02d}:{:02d}'.format(alarmHour, alarmMinute)
+    return 'alarm time set to ' + get_time()
+
+@app.route('/get_time')
+def get_time():
+    return '{:02d}:{:02d}'.format(settingsFile.getAlarmHour(), settingsFile.getAlarmMinute())
 
 busy = False
-lightsOn = True
-relayOn = False
 
 def relay(value):
-    global relayOn
-    relayOn = value
+    settingsFile.setRelayOn(value)
     GPIO.output(RELAY_BOARD_PIN, value)
 
 
@@ -95,19 +157,19 @@ def relay_off():
 
 @app.route('/relay_toggle')
 def relay_toggle():
-    relay(not relayOn)
-    if relayOn:
+    relay(not settingsFile.getRelayOn())
+    if settingsFile.getRelayOn():
         return 'relay on! (toggled)'
     else:
         return 'relay off! (toggled)'
 
 @app.route('/lights_on')
 def lights_on():
-    global busy, lightsOn
+    global busy
     if not busy:
         busy = True
         setAngle(servo, LIGHTS_ON_ANGLE)
-        lightsOn = True
+        settingsFile.setLightsOn(True)
         busy = False
         return 'lights on!'
     else:
@@ -115,11 +177,11 @@ def lights_on():
 
 @app.route('/lights_off')
 def lights_off():
-    global busy, lightsOn
+    global busy
     if not busy:
         busy = True
         setAngle(servo, LIGHTS_OFF_ANGLE)
-        lightsOn = False
+        settingsFile.setLightsOn(False)
         busy = False
         return 'lights off!'
     else:
@@ -127,15 +189,15 @@ def lights_off():
 
 @app.route('/lights_toggle')
 def lights_toggle():
-    global busy, lightsOn
+    global busy
     if not busy:
-        if lightsOn:
+        if settingsFile.getLightsOn():
             if not "busy" in lights_off():
-                lightsOn = False
+                settingsFile.setLightsOn(False)
                 return 'lights off! (toggled)'
         else:
             if not "busy" in lights_on():
-                lightsOn = True
+                settingsFile.setLightsOn(True)
                 return 'lights on! (toggled)'
     return 'busy, cannot toggle'
 

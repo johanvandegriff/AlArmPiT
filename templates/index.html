@@ -13,6 +13,8 @@
     <br/><br/>
     <input style="width:50px" type="text" id="hour" name="hour">:<input style="width:50px" type="text" id="minute" name="minute">
     <button onclick="setTime()">set time</button>
+    <button onclick="getTime()">get time</button>
+    <br/>
     <button onclick="myRequest('/ring')">test ring sound</button>
     <h2>Relay</h2>
     <button onclick="myRequest('/relay_on')">on</button>
@@ -20,6 +22,7 @@
     <button onclick="myRequest('/relay_toggle')">toggle</button>
 
     <br/>
+    <h2>Log</h2>
     <pre id="output"></pre>
 
     <script>
@@ -49,6 +52,22 @@
                 output.innerText += xhr.response + '\n';
             };
         }
+
+        function getTime() {
+
+            let xhr = new XMLHttpRequest();
+            xhr.open('get', '/get_time');
+            xhr.send();
+
+            xhr.onload = function () {
+                console.log(xhr.response);
+                hm = xhr.response.split(":")
+                document.getElementById("hour").value = hm[0];
+                document.getElementById("minute").value = hm[1];
+                output.innerText += 'current alarm time is ' + xhr.response + '\n';
+            };
+        }
+        getTime();
     </script>
 
 </body>
