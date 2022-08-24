@@ -6,7 +6,7 @@ cd ~
 git clone https://codeberg.org/johanvandegriff/AlArmPiT.git
 
 echo "Adding connection script to local crontab..."
-CRON_JOB="@reboot /usr/bin/python2 /home/pi/AlArmPiT/web-servo.py
+CRON_JOB="@reboot /home/pi/AlArmPiT/start.sh
 * * * * * curl localhost:5000/cron"
 cron_temp_file=$(mktemp)
 crontab -l > "$cron_temp_file"
